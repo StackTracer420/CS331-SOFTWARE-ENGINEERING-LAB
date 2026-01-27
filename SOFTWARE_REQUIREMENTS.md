@@ -1,10 +1,10 @@
-# 🚀 **End-to-End Business Process Automation (BPA) Platform**
+#  **End-to-End Business Process Automation (BPA) Platform**
 
 ### **Software Requirements Specification (SRS)**
 
 ---
 
-## 📌 **Overview**
+##  **Overview**
 
 The **End-to-End Business Process Automation (BPA) Platform** is a **web-based system** designed to automate, manage, and monitor business workflows.
 
@@ -12,7 +12,7 @@ It improves **efficiency, transparency, and accountability** by automating task 
 
 ---
 
-## 🎯 **Purpose**
+##  **Purpose**
 
 The purpose of this document is to define the **functional and non-functional requirements** of the BPA platform.
 
@@ -20,7 +20,7 @@ It serves as a reference for **developers, testers, and stakeholders** involved 
 
 ---
 
-## 🔍 **Scope**
+##  **Scope**
 
 The platform allows organizations to:
 
@@ -32,7 +32,7 @@ The platform allows organizations to:
 
 ---
 
-## 👥 **User Roles**
+##  **User Roles**
 
 * **Administrator** – Configures workflows, roles, and system settings
 * **User** – Initiates workflows and completes assigned tasks
@@ -40,7 +40,7 @@ The platform allows organizations to:
 
 ---
 
-## 🖥️ **System Requirements**
+##  **System Requirements**
 
 ### **Operating Environment**
 
@@ -58,7 +58,7 @@ The platform allows organizations to:
 
 ---
 
-## ⚙️ **Functional Requirements**
+##  **Functional Requirements**
 
 * **FR1:** Administrators can define and configure business workflows.
 * **FR2:** Users can initiate workflow requests.
@@ -72,7 +72,7 @@ The platform allows organizations to:
 
 ---
 
-## 📊 **Non-Functional Requirements**
+##  **Non-Functional Requirements**
 
 * **Reliability:** System operates consistently with minimal downtime.
 * **Scalability:** Supports multiple workflows and concurrent users.
@@ -82,7 +82,7 @@ The platform allows organizations to:
 
 ---
 
-## 🧩 **External Interfaces**
+##  **External Interfaces**
 
 ### **User Interface**
 
@@ -96,7 +96,7 @@ The platform allows organizations to:
 
 ---
 
-## 🔗 **Assumptions & Dependencies**
+##  **Assumptions & Dependencies**
 
 * Stable internet connectivity for users
 * Proper configuration of email services
@@ -104,7 +104,7 @@ The platform allows organizations to:
 
 ---
 
-## 🚧 **Future Enhancements**
+##  **Future Enhancements**
 
 * Third-party system integrations
 * Advanced analytics and reporting
@@ -112,10 +112,10 @@ The platform allows organizations to:
 
 ---
 
-## 📝 **Note**
+##  **Note**
 
 This repository documents the **SRS for the BPA Platform** and can be extended with **architecture diagrams, API documentation, and implementation details**.
 
 ---
 
-### ⭐ **If you find this project useful, consider giving it a star!**
+###  **If you find this project useful, consider giving it a star!**
