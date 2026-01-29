@@ -1,0 +1,71 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="BPA Use Case Diagram">
+    <mxGraphModel dx="1000" dy="800" grid="1" gridSize="10" guides="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- System Boundary -->
+        <mxCell id="2" value="End-to-End Business Process Automation (BPA) Platform"
+          style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="100" width="600" height="400" as="geometry"/>
+        </mxCell>
+
+        <!-- Actors -->
+        <mxCell id="3" value="Business User" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;"
+          vertex="1" parent="1">
+          <mxGeometry x="100" y="150" width="30" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="4" value="Process Designer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;"
+          vertex="1" parent="1">
+          <mxGeometry x="100" y="250" width="30" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="5" value="System Administrator" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;"
+          vertex="1" parent="1">
+          <mxGeometry x="100" y="350" width="30" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="6" value="External System" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;"
+          vertex="1" parent="1">
+          <mxGeometry x="950" y="250" width="30" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Use Cases -->
+        <mxCell id="7" value="Login" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+          <mxGeometry x="50" y="40" width="140" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="8" value="Create Business Process" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+          <mxGeometry x="250" y="40" width="200" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="9" value="Design Workflow" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+          <mxGeometry x="50" y="130" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="10" value="Automate Task" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+          <mxGeometry x="300" y="130" width="160" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="11" value="Monitor Process" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+          <mxGeometry x="50" y="220" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="12" value="Generate Reports" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+          <mxGeometry x="300" y="220" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="13" value="Manage Users" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+          <mxGeometry x="50" y="310" width="160" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="14" value="Integrate External Systems" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+          <mxGeometry x="300" y="310" width="240" height="50" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
