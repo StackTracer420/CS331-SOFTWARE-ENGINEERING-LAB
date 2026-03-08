@@ -1,6 +1,6 @@
 # CS 331 – Software Engineering Lab  
 ## Assignment 5 Report
-### Project: Intelligent End-to-End Business Process Automation (BPA) Platform
+### Project: Intelligent End-to-End Business Process Automation Platform
 
 ---
 
