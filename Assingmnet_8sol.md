@@ -3,7 +3,6 @@
 ## Assignment 8 Report
 
 ---
-
 # Part A: Data Access Layer (DAL)
 
 ## 1. Introduction
