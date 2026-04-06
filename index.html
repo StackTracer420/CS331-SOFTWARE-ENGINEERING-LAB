@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dynamic Intelligent BPA Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-8 bg-slate-50 font-sans">
+
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-800">Unified BPA Platform</h1>
+                <p class="text-slate-500 mt-1">Dynamic Workflow State Machine + AI Self-Healing Engine</p>
+            </div>
+            <button onclick="runAIEngine()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow-sm font-semibold transition-all flex items-center gap-2">
+                ⚡ Trigger AI Diagnostics
+            </button>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex gap-4 items-center">
+            <span class="font-bold text-slate-700">➕ Launch Workflow:</span>
+            <input type="text" id="newTaskName" placeholder="Task Name (e.g. Budget Request)" class="border border-slate-300 rounded px-3 py-1.5 text-sm w-64 outline-none focus:border-indigo-500">
+            <select id="newTaskUser" class="border border-slate-300 rounded px-3 py-1.5 text-sm outline-none">
+                <option value="John">Assign to: John</option>
+                <option value="Alice">Assign to: Alice</option>
+                <option value="Bob">Assign to: Bob</option>
+            </select>
+            <button onclick="createNewTask()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded shadow-sm text-sm font-bold transition-all">
+                Create
+            </button>
+        </div>
+
+        <div class="flex gap-6">
+            <div class="flex-1 space-y-6">
+                
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-blue-500">
+                        <p class="text-slate-500 text-xs font-bold uppercase">Total Workflows</p>
+                        <h2 class="text-3xl font-bold text-slate-800" id="total-tasks">0</h2>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-red-500">
+                        <p class="text-slate-500 text-xs font-bold uppercase">AI Escalations</p>
+                        <h2 class="text-3xl font-bold text-slate-800" id="high-risk">0</h2>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
+                        <p class="text-slate-500 text-xs font-bold uppercase">Completed</p>
+                        <h2 class="text-3xl font-bold text-slate-800" id="completed-tasks">0</h2>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-sm border-b">
+                                <th class="p-4 font-semibold">Workflow Details</th>
+                                <th class="p-4 font-semibold">System State</th>
+                                <th class="p-4 font-semibold">AI Diagnostics</th>
+                                <th class="p-4 font-semibold">Dynamic Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="task-table-body" class="divide-y divide-slate-100">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="w-80">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 h-full overflow-hidden">
+                    <div class="p-4 bg-slate-800 text-white font-bold flex items-center justify-between">
+                        <span>🔔 Event Logs</span>
+                        <button onclick="fetchData()" class="text-xs bg-slate-700 px-2 py-1 rounded hover:bg-slate-600">Refresh</button>
+                    </div>
+                    <ul id="notification-list" class="p-4 text-sm space-y-3">
+                        </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = fetchData;
+
+        async function fetchData() {
+            try {
+                const response = await fetch('http://localhost:8080/api/tasks');
+                const data = await response.json();
+                renderTasks(data.tasks);
+                renderNotifications(data.notifications);
+            } catch (error) {
+                console.error("Backend offline");
+                document.getElementById('notification-list').innerHTML = '<li class="text-red-500 font-bold p-3 bg-red-50 rounded">Backend is offline. Please run Main.java!</li>';
+            }
+        }
+
+        async function createNewTask() {
+            const name = document.getElementById('newTaskName').value;
+            const user = document.getElementById('newTaskUser').value;
+            if(!name) return alert("Please enter a Workflow Name!");
+            
+            await fetch(`http://localhost:8080/api/create?name=${encodeURIComponent(name)}&user=${user}`);
+            document.getElementById('newTaskName').value = ''; 
+            fetchData(); 
+        }
+
+        async function triggerWorkflowAction(taskId, action) {
+            await fetch(`http://localhost:8080/api/action?taskId=${taskId}&action=${action}`);
+            fetchData();
+        }
+
+        async function runAIEngine() {
+            await fetch(`http://localhost:8080/api/run-ai`);
+            fetchData(); 
+        }
+
+        function renderTasks(tasks) {
+            const tbody = document.getElementById('task-table-body');
+            tbody.innerHTML = '';
+            
+            let escalations = 0, completed = 0;
+
+            tasks.forEach(task => {
+                if(task.state === 'ESCALATED') escalations++;
+                if(task.state === 'APPROVED' || task.state === 'REJECTED') completed++;
+
+                // DYNAMIC ACTION GENERATOR
+                let actionsHTML = '';
+                if (task.availableActions && task.availableActions.length > 0) {
+                    task.availableActions.forEach(action => {
+                        // Color code based on action string
+                        let color = "bg-slate-500 hover:bg-slate-600";
+                        if(action === "SUBMIT") color = "bg-blue-500 hover:bg-blue-600";
+                        if(action === "APPROVE") color = "bg-green-500 hover:bg-green-600";
+                        if(action === "REJECT") color = "bg-red-500 hover:bg-red-600";
+                        if(action === "REQUEST_CHANGES") color = "bg-yellow-500 hover:bg-yellow-600 text-slate-900";
+                        
+                        actionsHTML += `<button onclick="triggerWorkflowAction('${task.taskId}', '${action}')" class="text-xs text-white px-2 py-1 rounded shadow-sm mr-1 mb-1 ${color}">${action.replace('_', ' ')}</button>`;
+                    });
+                } else {
+                    actionsHTML = `<span class="text-xs text-slate-400 italic">No human actions available</span>`;
+                }
+
+                // UI Status Colors
+                let stateUI = `<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold">${task.state}</span>`;
+                if (task.state === 'PENDING_REVIEW') stateUI = `<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold">${task.state}</span>`;
+                if (task.state === 'ESCALATED') stateUI = `<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold border border-red-200">🚨 ${task.state}</span>`;
+                if (task.state === 'APPROVED') stateUI = `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">${task.state}</span>`;
+
+                // AI Risk Badge
+                let riskBadge = `<span class="text-slate-400 text-sm">Not Scanned</span>`;
+                if (task.riskScore > 0) {
+                    let riskColor = task.riskScore > 0.7 ? 'text-red-600 bg-red-50 border-red-200' : task.riskScore > 0.5 ? 'text-orange-600 bg-orange-50 border-orange-200' : 'text-green-600 bg-green-50 border-green-200';
+                    riskBadge = `<span class="px-2 py-1 rounded border font-bold ${riskColor}">${(task.riskScore * 100).toFixed(0)}% Risk</span>`;
+                    if(task.recommendedAction !== "None" && task.recommendedAction !== "MONITOR") {
+                        riskBadge += `<br><span class="text-xs text-indigo-500 font-bold mt-1 inline-block">AI: ${task.recommendedAction}</span>`;
+                    }
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-4">
+                            <div class="font-bold text-slate-800">${task.taskId}: ${task.taskName}</div>
+                            <div class="text-sm text-slate-500 mt-1">👤 ${task.assignedTo}</div>
+                        </td>
+                        <td class="p-4">${stateUI}</td>
+                        <td class="p-4">${riskBadge}</td>
+                        <td class="p-4 flex flex-wrap gap-1">${actionsHTML}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('total-tasks').innerText = tasks.length;
+            document.getElementById('high-risk').innerText = escalations;
+            document.getElementById('completed-tasks').innerText = completed;
+        }
+
+        function renderNotifications(notifs) {
+            const list = document.getElementById('notification-list');
+            list.innerHTML = notifs.length === 0 ? '<li class="text-slate-400 italic">No events recorded.</li>' : '';
+            notifs.forEach(notif => {
+                let isAi = notif.includes("AI") || notif.includes("🔄") || notif.includes("🚨");
+                let style = isAi ? "border-l-4 border-indigo-500 bg-indigo-50 font-medium text-indigo-900" : "bg-slate-50 text-slate-700 border border-slate-100";
+                list.innerHTML += `<li class="p-3 rounded shadow-sm ${style}">${notif}</li>`;
+            });
+        }
+    </script>
+</body>
+</html>
