@@ -8,37 +8,34 @@ import java.util.*;
 
 public class Main {
 
-    // Global Instances
     static WorkflowRegistry workflowRegistry = new WorkflowRegistry();
     static TaskManager taskManager = new TaskManager();
     static NotificationEngine notificationEngine = new NotificationEngine();
-    static StandardWorkflowEngine standardWorkflow = new StandardWorkflowEngine(notificationEngine, workflowRegistry);
+    static StandardWorkflowEngine standardWorkflow = new StandardWorkflowEngine(notificationEngine, workflowRegistry, taskManager);
     
-    // AI Instances
     static AIDecisionEngine aiEngine = new AIDecisionEngine();
     static SmartAssignmentEngine smartAssign = new SmartAssignmentEngine();
     static EscalationHandler escalationHandler = new EscalationHandler(notificationEngine);
     static SelfHealingEngine selfHealing = new SelfHealingEngine(smartAssign, escalationHandler);
 
     public static void main(String[] args) throws IOException {
-        // Define our Dynamic Workflow Rules (State -> Action -> Next State)
+        // Dynamic Workflow Rules
         workflowRegistry.addRule("DRAFT", "SUBMIT", "PENDING_REVIEW");
         workflowRegistry.addRule("PENDING_REVIEW", "APPROVE", "APPROVED");
         workflowRegistry.addRule("PENDING_REVIEW", "REJECT", "REJECTED");
-        workflowRegistry.addRule("PENDING_REVIEW", "REQUEST_CHANGES", "DRAFT"); // Custom dynamic step!
+        workflowRegistry.addRule("PENDING_REVIEW", "REQUEST_CHANGES", "DRAFT");
 
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         server.createContext("/api/tasks", new TasksHandler());
-        server.createContext("/api/create", new CreateHandler()); // New Task Creation
+        server.createContext("/api/create", new CreateHandler()); 
         server.createContext("/api/action", new ActionHandler()); 
         server.createContext("/api/run-ai", new AIHandler());     
         server.setExecutor(null);
         server.start();
-        System.out.println("🚀 [SYSTEM ONLINE] Dynamic Intelligent BPA Platform running on http://localhost:8080");
+        System.out.println("🚀 [SYSTEM ONLINE] Database-Backed BPA Platform running on http://localhost:8080");
     }
 
     // --- API ENDPOINTS ---
-
     static class TasksHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -51,8 +48,6 @@ public class Main {
             StringBuilder json = new StringBuilder("{ \"tasks\": [");
             for (int i = 0; i < tasks.size(); i++) {
                 Task t = tasks.get(i);
-                
-                // Dynamically fetch allowed actions for this task's current state
                 List<String> allowedActions = workflowRegistry.getAllowedActions(t.state);
                 String actionsJson = "[\"" + String.join("\",\"", allowedActions) + "\"]";
                 if (allowedActions.isEmpty()) actionsJson = "[]";
@@ -113,6 +108,7 @@ public class Main {
                     t.riskScore = risk;
                     t.recommendedAction = aiEngine.recommendAction(risk);
                     selfHealing.takeAction(t, t.recommendedAction, taskManager.getUserPerformances());
+                    taskManager.updateTask(t); // SAVE AI DECISIONS TO DATABASE
                 }
             }
             sendResponse(exchange, "{\"status\":\"ai_completed\"}");
@@ -126,46 +122,63 @@ public class Main {
         os.close();
     }
 
-    // --- PHASE 1: CORE & DYNAMIC WORKFLOW ---
+    // --- ENGINES & MANAGERS ---
 
-    static class WorkflowRegistry {
-        // Maps CurrentState -> (Action -> NextState)
-        private Map<String, Map<String, String>> rules = new HashMap<>();
+    static class TaskManager {
+        private TaskDAO taskDAO = new TaskDAO();
+        private Map<String, Double> userPerformances = new HashMap<>();
 
-        public void addRule(String currentState, String action, String nextState) {
-            rules.putIfAbsent(currentState, new HashMap<>());
-            rules.get(currentState).put(action, nextState);
+        public TaskManager() {
+            userPerformances.put("John", 0.4); userPerformances.put("Bob", 0.3);
+            userPerformances.put("Alice", 0.9); userPerformances.put("Sarah_TopPerformer", 0.99);
         }
 
-        public List<String> getAllowedActions(String currentState) {
-            return rules.containsKey(currentState) ? new ArrayList<>(rules.get(currentState).keySet()) : new ArrayList<>();
+        public void addTask(String name, String user) {
+            String id = "TSK-" + System.currentTimeMillis(); // Generate unique DB ID
+            Task newTask = new Task(id, name, user, "DRAFT", 0, 5, 0.5);
+            taskDAO.insertTask(newTask); // SAVE TO DB
+            Main.notificationEngine.send("System", "New workflow created: " + name);
         }
 
-        public String getNextState(String currentState, String action) {
-            if (rules.containsKey(currentState) && rules.get(currentState).containsKey(action)) {
-                return rules.get(currentState).get(action);
-            }
-            return currentState;
-        }
+        public List<Task> getAllTasks() { return taskDAO.getAllTasks(); }
+        public Task getTaskById(String id) { return taskDAO.getTaskById(id); }
+        public void updateTask(Task task) { taskDAO.updateTask(task); }
+        public Map<String, Double> getUserPerformances() { return userPerformances; }
     }
 
     static class StandardWorkflowEngine {
         private NotificationEngine notifEngine;
         private WorkflowRegistry registry;
+        private TaskManager manager;
 
-        public StandardWorkflowEngine(NotificationEngine ne, WorkflowRegistry reg) { 
-            this.notifEngine = ne; 
-            this.registry = reg;
+        public StandardWorkflowEngine(NotificationEngine ne, WorkflowRegistry reg, TaskManager mgr) { 
+            this.notifEngine = ne; this.registry = reg; this.manager = mgr;
         }
         
         public void processAction(Task task, String action) {
             String newState = registry.getNextState(task.state, action);
             if (!newState.equals(task.state)) {
                 task.state = newState;
-                task.riskScore = 0.0; // Reset AI risk on human action
+                task.riskScore = 0.0; 
                 task.recommendedAction = "None";
-                notifEngine.send(task.assignedTo, "Task " + task.taskId + " moved to " + newState + " via " + action);
+                notifEngine.send(task.assignedTo, "Task " + task.taskId + " moved to " + newState);
+                manager.updateTask(task); // SAVE HUMAN ACTION TO DB
             }
+        }
+    }
+
+    static class WorkflowRegistry {
+        private Map<String, Map<String, String>> rules = new HashMap<>();
+        public void addRule(String currentState, String action, String nextState) {
+            rules.putIfAbsent(currentState, new HashMap<>());
+            rules.get(currentState).put(action, nextState);
+        }
+        public List<String> getAllowedActions(String currentState) {
+            return rules.containsKey(currentState) ? new ArrayList<>(rules.get(currentState).keySet()) : new ArrayList<>();
+        }
+        public String getNextState(String currentState, String action) {
+            return (rules.containsKey(currentState) && rules.get(currentState).containsKey(action)) 
+                    ? rules.get(currentState).get(action) : currentState;
         }
     }
 
@@ -179,8 +192,7 @@ public class Main {
         public List<String> getRecentNotifications() { return logs.size() > 6 ? logs.subList(0, 6) : logs; }
     }
 
-    // --- PHASE 2: AI & SELF-HEALING MODULES ---
-
+    // --- AI MODULES ---
     static class AIDecisionEngine {
         public double predictDelay(Task task) {
             double score = 0;
@@ -222,7 +234,6 @@ public class Main {
 
         public void takeAction(Task task, String action, Map<String, Double> stats) {
             if (task.isHealed) return; 
-            
             if (action.equals("REASSIGN")) {
                 String bestUser = smartAssign.assignBestUser(stats);
                 task.assignedTo = bestUser + " (AI)";
@@ -232,48 +243,6 @@ public class Main {
                 escHandler.escalate(task);
                 task.isHealed = true;
             }
-        }
-    }
-
-    // --- DATA & STATE ---
-
-    static class TaskManager {
-        private List<Task> database;
-        private Map<String, Double> userPerformances;
-        private int taskCounter = 105;
-
-        public TaskManager() {
-            database = new ArrayList<>(Arrays.asList(
-                new Task("TSK-101", "Vendor Payment", "John", "DRAFT", 0, 3, 0.4),
-                new Task("TSK-102", "Server Audit", "Alice", "PENDING_REVIEW", 1, 4, 0.9),
-                new Task("TSK-103", "Data Migration", "Bob", "PENDING_REVIEW", 3, 8, 0.3)
-            ));
-            userPerformances = new HashMap<>();
-            userPerformances.put("John", 0.4); userPerformances.put("Bob", 0.3);
-            userPerformances.put("Alice", 0.9); userPerformances.put("Sarah_TopPerformer", 0.99);
-        }
-
-        public void addTask(String name, String user) {
-            String id = "TSK-" + (taskCounter++);
-            database.add(new Task(id, name, user, "DRAFT", 0, 5, 0.5));
-            Main.notificationEngine.send("System", "New task created: " + name);
-        }
-
-        public List<Task> getAllTasks() { return database; }
-        public Task getTaskById(String id) { return database.stream().filter(t -> t.taskId.equals(id)).findFirst().orElse(null); }
-        public Map<String, Double> getUserPerformances() { return userPerformances; }
-    }
-
-    static class Task {
-        String taskId, taskName, assignedTo, state, recommendedAction;
-        int daysPending, complexity;
-        double userPerformance, riskScore;
-        boolean isHealed;
-
-        public Task(String id, String name, String user, String state, int days, int comp, double perf) {
-            this.taskId = id; this.taskName = name; this.assignedTo = user; this.state = state;
-            this.daysPending = days; this.complexity = comp; this.userPerformance = perf;
-            this.riskScore = 0.0; this.recommendedAction = "None"; this.isHealed = false;
         }
     }
 }
